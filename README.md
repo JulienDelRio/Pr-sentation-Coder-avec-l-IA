@@ -17,27 +17,25 @@ Par exemple, de la vérification d'emails.
 
 [Voir le prompt](./prompts/check_emails_csv.md)
 
-### 2 - Créer un workflow n8n
-
+### 2 - Créer des workflows n8n
 
 Lui demander de générer le blueprint en JSON d'un workflow.
 
-Exemple : workflow “Vérification de mot de passe secret” qui les concepts fondamentaux de n8n :
-
-[Voir le prompt](prompts/n8n-check-password.md)
-
-Autre exemple : afficher les infos d'un projet github
-
-[La version par Form](./prompts/n8n-github-repo-html-form.md) / [la version par Incoming Webhook](./prompts/n8n-github-repo-html-webhook.md)
-
+Exemples : 
+- Envoyer les mails valides du script généré précédemment [le prompt](/prompts/n8n-publipostage.md)
+- “Vérification de mot de passe secret” qui les concepts fondamentaux de n8n : [le prompt](prompts/n8n-check-password.md)
+- afficher les infos d'un projet github [La version par Form](./prompts/n8n-github-repo-html-form.md) / [la version par Incoming Webhook](./prompts/n8n-github-repo-html-webhook.md)
 
 ### 3 - Analyser du code
 
-Voici un exemple de prompt pour comparer si on fournit les fichiers via l'interface, versus si on l'exécute en local.
+Voici un exemple de prompt pour analyser du code fourni les fichiers via l'interface, versus si on l'exécute en local.
+
+[Voir le prompt](./prompts/code_analysis.md)
 
 
 ### 4 - Créer une petite application web
 
 Et là un projet complet à faire faire à un agent IA.
+[App de messagerie](./main/prompts/messaging_app.md)
 
 
