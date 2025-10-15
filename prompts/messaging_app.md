@@ -1,85 +1,268 @@
-Crée une **application web de messagerie interne** simple mais complète, exécutable facilement (`docker compose up` ou `npm run dev`).
-Utilise **Node.js + Express + SQLite + Prisma + JWT** pour le backend, et un **frontend léger (React ou Vanilla JS)**.
+On va créer ensemble une **application web de messagerie interne** simple mais complète, exécutable facilement via :
 
-**Fonctionnalités principales :**
+```bash
+docker compose up
+# ou
+npm run dev
+```
 
-1. **Cycle utilisateur**
+---
 
-   * Sign up, login, logout.
-   * Deux rôles : `user` (par défaut) et `admin`.
-   * Création automatique d’un **compte admin** via variables d’environnement (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`, `JWT_SECRET`, `DATABASE_URL`).
-   * Auth sécurisée par **JWT** (en cookie httpOnly).
-   * **Expiration du JWT** + **refresh token automatique**.
-   * **Réinitialisation de mot de passe** via email ou **token généré par l’admin**.
+### 🧱 **Stack technique**
 
-2. **Gestion utilisateur**
+* **Backend** : Node.js + Express + SQLite + Prisma + JWT
+* **Frontend** : React (ou Vanilla JS, au choix)
+* **Sécurité / Auth** : Cookies httpOnly, bcrypt (ou argon2)
+* **Logs / Docs / Tests** : Pino, Swagger, Jest (ou équivalent)
+* **Infra** : Dockerfile + docker-compose + migrations auto
+* **Objectif** : code clair, commenté, modulaire, et facile à exécuter.
 
-   * Page de **profil** (nom complet, avatar, bio courte).
-   * Possibilité de **modifier son profil** (nom, mot de passe, avatar).
-   * **Hashage fort des mots de passe** (bcrypt ou argon2).
-   * **Historique d’activité** visible uniquement par les admins.
-   * **Admins** peuvent : supprimer un utilisateur, changer son rôle, réinitialiser un mot de passe.
+---
 
-3. **Messagerie (auth requise)**
+## 🚀 Étapes de réalisation
 
-   * Lire la **liste des messages** (avec pagination ou lazy loading).
-   * Écrire un message.
-   * **Éditer son message** dans un délai de 2 minutes.
-   * Supprimer **ses propres messages** (avec **confirmation visuelle**).
-   * Affichage style “messagerie instantanée” :
+### 0️⃣ Préparation
 
-     * messages de l’utilisateur courant à droite,
-     * messages des autres à gauche.
-   * Chaque message affiche :
+* Définir la stack, le style d’authentification, la stratégie de pagination et de notification (polling ou SSE).
+* Créer un fichier `ARCHITECTURE.md` décrivant les flux (auth, messages), schémas DB, rôles, et contraintes.
 
-     * le **nom de l’expéditeur**,
-     * l’**horodatage** (“il y a 3 min” ou format lisible).
-   * **Notification visuelle** (badge ou surbrillance) à la réception de nouveaux messages.
-   * **Scroll automatique** vers le dernier message après envoi ou réception.
+---
 
-4. **Admin / Modération**
+### 1️⃣ Structure du projet
 
-   * Supprimer un utilisateur.
-   * Changer les droits (user ↔ admin).
-   * Supprimer **n’importe quel message**.
-   * Consulter l’**historique d’activité** (journal minimal).
-   * Journalise automatiquement : création/suppression de message, changements de rôle, connexions.
+* Initialiser le dépôt Git et NPM.
+* Créer la structure :
 
-5. **Technique / DevOps**
+  ```
+  /backend (src, prisma, tests)
+  /frontend (src)
+  /infra (Dockerfile(s), docker-compose.yml)
+  ```
+* Ajouter ESLint, Prettier, scripts `npm run dev`, `npm run build`.
+* Objectif : `npm run dev` lance un serveur “Hello World”.
 
-   * Variables d’environnement documentées dans `.env.example`.
-   * **Migration automatique** via `Prisma migrate`.
-   * **Script de seed initial** :
+---
 
-     * création de l’admin,
-     * ajout d’un **message de bienvenue** signé par l’admin.
-   * Endpoints REST documentés (mini OpenAPI/Swagger).
-   * Endpoint `/health` pour monitoring.
-   * Logs structurés avec Winston ou Pino.
-   * Code clair, commenté et prêt à tester (tests unitaires basiques).
+### 2️⃣ Backend minimal (Express + Prisma + SQLite)
 
-6. **Exécution**
+* Installer : `express`, `cors`, `cookie-parser`, `pino`, `zod`, `prisma`.
+* Initialiser Prisma (`npx prisma init`) et définir `provider = sqlite`.
+* Créer endpoint `/health` qui renvoie `{ status: "ok" }`.
 
-   * Tout doit fonctionner via :
+---
 
-     ```bash
-     docker compose up
-     ```
+### 3️⃣ Modèle de données Prisma (v1)
 
-     (avec Dockerfile, docker-compose.yml, seed et migrations automatiques).
-   * Alternative :
+* Tables :
 
-     ```bash
-     npm install && npm run dev
-     ```
+  * `User`: id, name, email, passwordHash, role (`user`/`admin`), bio, avatar.
+  * `Message`: id, text, authorId, createdAt, updatedAt.
+  * `ActivityLog`: id, type, userId, createdAt, meta JSON.
+  * `RefreshToken`: id, userId, token, expiresAt.
+* Commandes :
 
-7. **Livrables**
+  ```bash
+  npx prisma migrate dev -n init
+  npx prisma studio
+  ```
 
-   * Code source complet.
-   * README détaillant :
+---
 
-     * variables d’environnement,
-     * installation,
-     * commandes de migration/seed,
-     * comptes de test (admin / user),
-     * structure des endpoints.
+### 4️⃣ Variables d’environnement + Seed initial
+
+* `.env.example` doit contenir :
+
+  ```
+  DATABASE_URL="file:./dev.db"
+  JWT_SECRET="changeme"
+  ADMIN_EMAIL="admin@example.com"
+  ADMIN_PASSWORD="password123"
+  ADMIN_NAME="Super Admin"
+  FRONTEND_URL="http://localhost:5173"
+  PORT=3000
+  ```
+* Script `prisma/seed.ts` : crée l’admin + un message de bienvenue.
+* Commande : `npm run prisma:seed`
+
+---
+
+### 5️⃣ Authentification JWT + Refresh Token
+
+* Endpoints :
+
+  * `POST /auth/signup`
+  * `POST /auth/login`
+  * `POST /auth/logout`
+  * `POST /auth/refresh`
+  * `GET /auth/me`
+* Tokens :
+
+  * `accessToken` court (15 min)
+  * `refreshToken` long (7–30 j)
+* Utiliser cookies `httpOnly`, `SameSite=Lax`, `Secure` en prod.
+* Middleware : `requireAuth`, `requireAdmin`.
+
+---
+
+### 6️⃣ Réinitialisation du mot de passe
+
+* Deux modes :
+
+  1. Par email : `/auth/request-reset` → lien ou token.
+  2. Par admin : `/admin/reset-password/:id`.
+* Validation via Zod, tokens temporaires JWT.
+
+---
+
+### 7️⃣ Gestion utilisateur + Profil
+
+* Endpoints :
+
+  * `GET /me/profile`
+  * `PUT /me/profile`
+  * `GET /admin/users`
+  * `PATCH /admin/users/:id` (changer rôle)
+  * `DELETE /admin/users/:id`
+* L’admin peut : supprimer un utilisateur, changer un rôle, réinitialiser un mot de passe.
+* Ajout de `ActivityLog` automatique sur les actions clés.
+
+---
+
+### 8️⃣ Messagerie (auth requise)
+
+* Endpoints :
+
+  * `GET /messages?cursor=...` (pagination ou lazy load)
+  * `POST /messages`
+  * `PATCH /messages/:id` (si auteur & < 2 min)
+  * `DELETE /messages/:id` (ou admin)
+* Format message :
+
+  * Nom de l’expéditeur
+  * Horodatage (ex. “il y a 3 min”)
+* Journaliser création/suppression de messages.
+
+---
+
+### 9️⃣ Notifications + “Instantané”
+
+* Deux options :
+
+  * **Polling** toutes les 3–5 s.
+  * **Server-Sent Events (SSE)** sur `/events/messages`.
+* Frontend :
+
+  * Badge visuel à la réception d’un nouveau message.
+  * Scroll automatique vers le bas après envoi ou réception.
+
+---
+
+### 🔟 Frontend – Auth & Routing
+
+* Stack : React + Vite.
+* Pages :
+
+  * Login / Signup
+  * Inbox (chat)
+  * Profil
+  * Admin Dashboard
+* State global (user + token), garde de route selon rôle.
+* `fetch(..., { credentials: 'include' })` pour cookies JWT.
+
+---
+
+### 11️⃣ Frontend – UI Messagerie & Admin
+
+* Chat :
+
+  * Messages courants à droite, autres à gauche.
+  * Édition possible pendant 2 minutes.
+  * Suppression avec **confirmation visuelle**.
+  * Pagination/lazy loading au scroll.
+* Admin :
+
+  * Liste utilisateurs
+  * Changement de rôle
+  * Suppression utilisateur ou message
+  * Consultation du journal d’activité
+
+---
+
+### 12️⃣ Observabilité & Documentation API
+
+* Ajouter :
+
+  * Logs structurés (`pino` ou `winston`)
+  * Endpoint `/health` enrichi (uptime, DB status)
+  * Mini Swagger (`swagger-ui-express`)
+* Convention d’erreur : `{ error, code, message }`
+* Page `/docs` (protégée ou non indexée).
+
+---
+
+### 13️⃣ Tests & Sécurité
+
+* Tests unitaires sur :
+
+  * Auth (hash/verify, refresh)
+  * Messagerie (édition ≤ 2 min)
+  * Rôles et permissions
+* Tests d’API (auth flow, CRUD message)
+* Sécurité :
+
+  * `helmet`, `cors` strict
+  * validation Zod partout
+  * cookies sécurisés
+  * rate-limit sur login
+
+---
+
+### 14️⃣ Docker & Exécution finale
+
+* **Dockerfiles** :
+
+  * Backend (multi-stage)
+  * Frontend (build + serveur statique)
+* **docker-compose.yml** :
+
+  * Services : backend, frontend, volume SQLite, healthchecks
+  * Lancement auto des migrations et du seed
+* Commandes :
+
+  ```bash
+  docker compose up --build
+  ```
+
+  ou
+
+  ```bash
+  npm install && npm run dev
+  ```
+* Tout doit fonctionner sans configuration manuelle.
+
+---
+
+## 🧾 Livrables attendus
+
+* Code source complet.
+* `README.md` détaillé :
+
+  * Installation et lancement
+  * Variables d’environnement
+  * Commandes Prisma (`migrate`, `seed`)
+  * Comptes de test (admin / user)
+  * Liste des endpoints REST
+  * Architecture globale
+* `.env.example` complet.
+
+---
+
+## ✅ Critères de réussite
+
+* `docker compose up` démarre toute l’application (backend, frontend, DB, migrations auto, seed admin).
+* Auth JWT + refresh token fonctionnels.
+* Réinitialisation de mot de passe (email et admin).
+* Messagerie instantanée fluide avec notifications visuelles.
+* Logs, Swagger, `/health` et tests disponibles.
+* Rôles et journal d’activité opérationnels.
+* Code clair, commenté, modulaire, et exécutable sans intervention manuelle.
