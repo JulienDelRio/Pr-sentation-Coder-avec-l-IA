@@ -20,8 +20,6 @@ Assure-toi que les erreurs soient **diversifiées et réalistes**.
 
 # Le prompt
 
-Rédige un prompt concis (15 lignes maximum) décrivant la tâche suivante :
-
 - Créer deux scripts qui filtrent des adresses e-mail valides selon la RFC 5322.  
 - Un script **JavaScript (Node.js)** qui lit un fichier CSV d’entrée et génère un fichier de sortie avec le même contenu + une colonne `valid` (true/false), enregistré avec le suffixe `_checked`.  
 - Un script **Excel VBA** qui lit les adresses dans la **colonne A**, ignore la première ligne d’en-tête, et écrit le résultat (`True`/`False`) dans la **colonne B** du même fichier.  
