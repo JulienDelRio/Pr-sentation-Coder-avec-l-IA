@@ -54,7 +54,15 @@ Le support complet de la présentation est disponible ici :
 
 **Niveau :** 🟡 Intermédiaire
 
-### 3️⃣ Analyser du code
+### 3️⃣ Google Slide vers Reveal.js
+
+**Objectif :** produire une page html simple pour reprendre le contenu du Google Slide.
+
+**Niveau :** 🟡 Intermédiaire
+
+📄 [Voir le prompt](./prompts/prez.md)
+
+### 4️⃣ Analyser du code
 
 **Objectif :** Utiliser l'IA pour comprendre, documenter ou réviser du code existant.
 
@@ -64,7 +72,7 @@ Le support complet de la présentation est disponible ici :
 
 📄 [Voir le prompt](./prompts/code_analysis.md)
 
-### 4️⃣ Créer une application web complète
+### 5️⃣ Créer une application web complète
 
 **Objectif :** Déléguer la création d'un projet complet à un agent IA.
 
